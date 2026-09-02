@@ -1,58 +1,149 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏭 Hệ Thống Quản Lý Kho Xưởng Thông Minh (Smart Warehouse Management System - WMS)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
+[![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)](#)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-## About Laravel
+Hệ thống Quản lý Kho xưởng hiện đại, tối ưu hóa quy trình luân chuyển hàng hóa, theo dõi vị trí chính xác đến từng thùng hàng/vị trí kệ, tự động hóa xuất kho theo nguyên tắc **FIFO/FEFO**, cảnh báo tồn kho thời gian thực và trích xuất báo cáo Nhập - Xuất - Tồn chuyên nghiệp.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🌟 Tính Năng Nổi Bật
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 1. 📥 Quản lý Nhập Kho (Inbound)
+- **Quy cách đóng thùng linh hoạt**: Cho phép nhập hàng theo quy cách động (thùng chẵn, thùng lẻ, số lượng cái/thùng tùy biến).
+- **Định vị vị trí lưu kho chi tiết**: Gán từng mã thùng hàng (`Carton Code`) vào từng vị trí tọa độ kệ cụ thể (Dãy/Zone - Kệ/Rack - Tầng/Level).
+- **Mã vạch & Lô hàng (Lot/Batch)**: Quản lý theo số Lot, hạn dùng và mã Barcode chuẩn EAN/UPC.
+- **Hỗ trợ đầy đủ CRUD**: Tạo mới, xem chi tiết, cập nhật phiếu và xóa phiếu (tự động đồng bộ trừ tồn kho tương ứng).
 
-## Learning Laravel
+### 2. 📤 Quản lý Xuất Kho (Outbound) & Thuật toán Gợi ý Tối ưu
+- **Gợi ý xuất kho thông minh (FIFO / FEFO)**: Tự động tìm kiếm các thùng nhập trước hoặc có hạn sử dụng gần nhất để đề xuất lấy hàng trước, giảm thiểu hư hao hàng hóa.
+- **Tự động trừ số lượng thùng**: Xử lý linh hoạt việc xuất nguyên thùng hoặc cắt lẻ thùng hàng, tự động cập nhật trạng thái thùng (`IN_STOCK` -> `EXPORTED`).
+- **Khôi phục tồn khi hủy phiếu**: Nếu xóa hoặc chỉnh sửa phiếu xuất, hệ thống hoàn trả chính xác số lượng về đúng thùng hàng cũ.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 3. 🗺️ Sơ đồ Kho Trực quan (Warehouse Zone Map)
+- **Bản đồ 140 vị trí kho**: Trực quan hóa 7 dãy (Zone A đến G), mỗi dãy 5 kệ (Rack 1-5), mỗi kệ 4 tầng (Level 1-4).
+- **Màu sắc trạng thái vị trí**: Trực quan ô vị trí trống (Empty) và ô đang chứa hàng (Occupied), hỗ trợ click xem nhanh chi tiết hàng đang lưu trong vị trí đó.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. 🔔 Hệ thống Cảnh báo & Giám sát Thời gian thực (Real-time Notification)
+- **Cảnh báo hết hàng (Out of stock)**: Báo động tức thời khi số lượng tồn = 0.
+- **Cảnh báo tồn kho dưới ngưỡng an toàn (Low stock)**: So sánh với định mức tối thiểu (`min_stock`) của từng sản phẩm.
+- **Cảnh báo thùng sắp cạn**: Phát hiện các thùng lẻ còn dưới 10% số lượng.
+- **Cảnh báo vượt mức tồn kho (Over stock)**: Cảnh báo khi tồn kho vượt quá dung lượng cho phép (`max_stock`).
+- **Real-time Polling & Toast Notification**: Tự động thông báo khi có đồng nghiệp vừa tạo phiếu nhập/xuất mới trên hệ thống.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 5. 📊 Báo cáo Nhập - Xuất - Tồn (NXT) & Xuất Excel
+- Thống kê chi tiết: **Tồn đầu kỳ**, **Nhập trong kỳ**, **Xuất trong kỳ**, **Tồn cuối kỳ**, **Đơn giá & Thành tiền**.
+- Bộ lọc linh hoạt theo ngày hoặc khoảng thời gian.
+- Hỗ trợ xuất dữ liệu ra file Excel định dạng bảng chuẩn cho kế toán và quản lý.
 
-## Agentic Development
+### 6. 🛡️ Nhật ký Hệ thống (Audit Logs) & Phân quyền (RBAC)
+- **Audit Logs**: Ghi vết lịch sử mọi tác vụ quan trọng (Ai đã nhập, xuất, sửa phiếu lúc mấy giờ).
+- **Phân quyền đa cấp độ (Role-Based Access Control)**:
+  - 👑 **Admin**: Toàn quyền cấu hình người dùng, danh mục và quản trị hệ thống.
+  - 💼 **Manager (Quản lý kho)**: Quản lý danh mục, xem báo cáo, giám sát nhập/xuất.
+  - 📋 **Accountant (Kế toán)**: Xem báo cáo NXT, số liệu giá trị kho và xuất Excel.
+  - 📦 **Staff (Thủ kho)**: Trực tiếp tạo phiếu nhập kho, thực hiện xuất kho và theo dõi sơ đồ.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
+## 🏗️ Kiến Trúc Công Nghệ
+
+- **Backend**: Laravel 12.x / PHP 8.2+
+- **Database**: MySQL 8.0+
+- **Kiến trúc mã nguồn**: Service Pattern (`InboundService`, `OutboundService`, `ReportService`) tách biệt nghiệp vụ với Controller.
+- **Frontend / UI**: Laravel Blade Templates, Custom Vanilla CSS Dark Mode / Glassmorphism, FontAwesome 6, Google Font Outfit.
+- **Testing**: PHPUnit / Laravel Feature Tests (đạt 100% assertions thành công).
+
+---
+
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Dự Án
+
+### Yêu cầu môi trường
+- PHP >= 8.2 (kèm các extension: pdo_mysql, mbstring, openssl, xml, curl, zip)
+- Composer 2.x
+- MySQL hoặc MariaDB
+- Git
+
+### Các bước cài đặt:
+
+1. **Clone mã nguồn về máy**:
+   ```bash
+   git clone https://github.com/Minhduc32/duankho.git
+   cd duankho
+   ```
+
+2. **Cài đặt các thư viện phụ thuộc (Dependencies)**:
+   ```bash
+   composer install
+   ```
+
+3. **Cấu hình file môi trường (.env)**:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+   *Mở file `.env` và thiết lập kết nối cơ sở dữ liệu MySQL:*
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=kho_xuong
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+
+4. **Chạy Migration và nạp dữ liệu mẫu (Seeder)**:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+
+5. **Khởi chạy ứng dụng**:
+   ```bash
+   php artisan serve
+   ```
+   Truy cập trên trình duyệt tại: `http://127.0.0.1:8000`
+
+---
+
+## 👥 Tài Khoản Đăng Nhập Mẫu
+
+Hệ thống đã chuẩn bị sẵn các tài khoản demo tương ứng với 4 vai trò:
+
+| Vai trò | Tên tài khoản | Mật khẩu | Chức năng chính |
+| :--- | :--- | :--- | :--- |
+| **Quản trị viên (Admin)** | `admin` | `admin123` | Toàn quyền hệ thống |
+| **Quản lý kho (Manager)** | `manager` | `manager123` | Quản lý sản phẩm, sơ đồ, báo cáo |
+| **Kế toán (Accountant)** | `accountant` | `accountant123` | Kiểm tra tồn kho, xuất báo cáo NXT |
+| **Thủ kho (Staff)** | `staff` | `staff123` | Thực hiện Nhập/Xuất kho hàng ngày |
+
+---
+
+## 🧪 Kiểm Thử Tự Động (Testing)
+
+Dự án đi kèm bộ kiểm thử tự động toàn diện bao gồm: luồng nhập kho, thuật toán xuất kho FIFO, sửa/xóa phiếu và tính toán bảng NXT.
+
+Chạy kiểm thử:
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php artisan test
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Kết quả:
+```text
+PASS  Tests\Feature\WarehouseTest
+✓ full warehouse flow
+✓ inbound edit and delete
+✓ outbound edit and delete
+✓ user registration
 
-## Contributing
+Tests:    4 passed (36 assertions)
+Duration: ~1.2s
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 📄 Bản Quyền (License)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Dự án được phân phối dưới giấy phép **MIT License**. Tự do sử dụng, chỉnh sửa và đóng góp cho mục đích học tập cũng như thương mại.
