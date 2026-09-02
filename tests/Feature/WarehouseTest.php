@@ -293,4 +293,112 @@ class WarehouseTest extends TestCase
             'role_id' => 4
         ]);
     }
+
+    public function test_user_management_by_admin()
+    {
+        $this->seed();
+
+        $admin = User::where('username', 'admin')->first();
+        $staff = User::where('username', 'staff')->first();
+
+        // 1. Staff bị chặn khi truy cập trang Quản lý nhân viên
+        $this->actingAs($staff);
+        $resForbidden = $this->get(route('users.index'));
+        $resForbidden->assertRedirect(route('dashboard'));
+
+        // 2. Admin truy cập thành công
+        $this->actingAs($admin);
+        $resAdmin = $this->get(route('users.index'));
+        $resAdmin->assertStatus(200);
+
+        // 3. Admin tạo nhân viên mới
+        $resCreate = $this->post(route('users.store'), [
+            'username'  => 'ketoan1',
+            'full_name' => 'Nguyễn Kế Toán Mới',
+            'password'  => 'secret123',
+            'role_id'   => 3,
+            'is_active' => 1
+        ]);
+        $resCreate->assertRedirect(route('users.index'));
+        $this->assertDatabaseHas('users', ['username' => 'ketoan1', 'role_id' => 3]);
+
+        $newUser = User::where('username', 'ketoan1')->first();
+
+        // 4. Admin cập nhật vai trò và khóa tài khoản
+        $resUpdate = $this->post(route('users.update', $newUser->id), [
+            'full_name' => 'Nguyễn Kế Toán (Đã Đổi)',
+            'role_id'   => 2, // Chuyển sang manager
+            'is_active' => 0
+        ]);
+        $resUpdate->assertRedirect(route('users.index'));
+        $this->assertDatabaseHas('users', ['id' => $newUser->id, 'role_id' => 2, 'is_active' => 0]);
+
+        // 5. Admin reset mật khẩu cho nhân viên
+        $resReset = $this->post(route('users.reset-password', $newUser->id), [
+            'new_password' => 'newpassword123',
+            'new_password_confirmation' => 'newpassword123'
+        ]);
+        $resReset->assertRedirect(route('users.index'));
+    }
+
+    public function test_personal_password_change()
+    {
+        $this->seed();
+
+        $staff = User::where('username', 'staff')->first();
+        $this->actingAs($staff);
+
+        // Mật khẩu hiện tại sai -> thất bại
+        $resFail = $this->post(route('profile.password'), [
+            'current_password' => 'wrongpassword',
+            'new_password' => 'newstaffpass123',
+            'new_password_confirmation' => 'newstaffpass123'
+        ]);
+        $resFail->assertSessionHas('error');
+
+        // Mật khẩu hiện tại đúng ('staff123') -> thành công
+        $resSuccess = $this->post(route('profile.password'), [
+            'current_password' => 'staff123',
+            'new_password' => 'newstaffpass123',
+            'new_password_confirmation' => 'newstaffpass123'
+        ]);
+        $resSuccess->assertSessionHas('success');
+    }
+
+    public function test_carton_lookup_api()
+    {
+        $this->seed();
+
+        $staff = User::where('username', 'staff')->first();
+        $this->actingAs($staff);
+
+        // Tạo 1 thùng hàng
+        $inboundService = app(\App\Services\InboundService::class);
+        $prod1 = Product::where('sku', 'PROD001')->first();
+        $inboundService->createReceipt('PO-LOOKUP', now()->toDateTimeString(), $staff->id, 'Test lookup', [
+            [
+                'product_id' => $prod1->id,
+                'lot_number' => 'LOT-LOOKUP',
+                'price'      => 10000,
+                'cartons'    => [['pieces' => 25, 'location_id' => 1]]
+            ]
+        ]);
+
+        $res = $this->get('/api/carton/lookup?code=LOT-LOOKUP');
+        $res->assertStatus(200);
+        $res->assertJsonFragment(['sku' => 'PROD001']);
+    }
+
+    public function test_product_search_and_filter()
+    {
+        $this->seed();
+
+        $staff = User::where('username', 'staff')->first();
+        $this->actingAs($staff);
+
+        $resSearch = $this->get('/products?q=Heineken&status=normal');
+        $resSearch->assertStatus(200);
+        $resSearch->assertSee('Heineken');
+    }
 }
+

@@ -332,6 +332,37 @@
     </div>
 </div>
 
+<!-- Quick Barcode / Carton Lookup Card -->
+<div class="card" style="margin-top: 1.5rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.8) 100%);">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: white;">
+                <i class="fa-solid fa-barcode" style="color: var(--accent); margin-right: 0.5rem;"></i>Tra cứu nhanh Thùng hàng / Barcode
+            </h3>
+            <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 0.2rem;">
+                Quét mã barcode hoặc nhập mã thùng (vd: C-LOT...), mã SKU, mã vị trí để tra cứu vị trí ô kệ và số lượng tức thì.
+            </p>
+        </div>
+    </div>
+    
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 260px;">
+            <input type="text" id="cartonLookupInput" class="form-control" style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 10px; color: white;" placeholder="Nhập mã thùng hàng, SKU hoặc mã vạch vị trí..." onkeyup="if(event.key==='Enter') executeCartonLookup()">
+        </div>
+        <button type="button" class="btn btn-primary" onclick="executeCartonLookup()">
+            <i class="fa-solid fa-magnifying-glass"></i> Tra cứu
+        </button>
+    </div>
+
+    <div id="cartonLookupResult" style="display: none; margin-top: 1.25rem;">
+        <div id="cartonLookupSpinner" style="display:none; text-align:center; padding: 1.5rem; color: var(--accent);">
+            <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+            <p style="margin-top: 0.5rem; font-size: 0.85rem;">Đang tìm kiếm dữ liệu thùng hàng...</p>
+        </div>
+        <div id="cartonLookupContent"></div>
+    </div>
+</div>
+
 <div class="grid-dashboard">
     <!-- Left panel: 7 Zone Layout Map overview -->
     <div class="card">
@@ -409,3 +440,77 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function executeCartonLookup() {
+    const input = document.getElementById('cartonLookupInput');
+    const code = input.value.trim();
+    if (!code) {
+        alert('Vui lòng nhập mã để tra cứu.');
+        return;
+    }
+
+    const container = document.getElementById('cartonLookupResult');
+    const spinner = document.getElementById('cartonLookupSpinner');
+    const content = document.getElementById('cartonLookupContent');
+
+    container.style.display = 'block';
+    spinner.style.display = 'block';
+    content.innerHTML = '';
+
+    fetch(`/api/carton/lookup?code=${encodeURIComponent(code)}`)
+        .then(res => res.json())
+        .then(data => {
+            spinner.style.display = 'none';
+            if (data.error) {
+                content.innerHTML = `<div class="alert alert-error" style="padding:0.75rem 1rem; border-radius:10px; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.2);">${data.error}</div>`;
+                return;
+            }
+            if (!data.cartons || data.cartons.length === 0) {
+                content.innerHTML = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); background:rgba(255,255,255,0.02); border-radius:12px;">Không tìm thấy thùng hàng nào khớp với mã <strong>"${code}"</strong>.</div>`;
+                return;
+            }
+
+            let html = `<div style="overflow-x:auto;"><table class="table" style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid var(--border-color); color:var(--text-muted); text-transform:uppercase; font-size:0.75rem;">
+                        <th style="padding:0.6rem; text-align:left;">Mã thùng</th>
+                        <th style="padding:0.6rem; text-align:left;">Sản phẩm</th>
+                        <th style="padding:0.6rem; text-align:left;">Số lượng (Tồn/Gốc)</th>
+                        <th style="padding:0.6rem; text-align:left;">Vị trí lưu kho</th>
+                        <th style="padding:0.6rem; text-align:left;">Mã vạch vị trí</th>
+                        <th style="padding:0.6rem; text-align:left;">Ngày nhập</th>
+                        <th style="padding:0.6rem; text-align:right;">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            data.cartons.forEach(c => {
+                const isStock = c.status === 'IN_STOCK';
+                const badgeColor = isStock ? 'background:rgba(16,185,129,0.15); color:#34d399;' : 'background:rgba(245,158,11,0.15); color:#fbbf24;';
+                html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:0.6rem; font-family:monospace; font-weight:700; color:white;">${c.carton_code}</td>
+                    <td style="padding:0.6rem;"><strong>${c.product_name}</strong> <span style="color:var(--text-muted); font-size:0.8rem;">(${c.sku})</span></td>
+                    <td style="padding:0.6rem;"><span style="color:var(--accent); font-weight:700;">${c.current_pieces}</span> / ${c.original_pieces} cái</td>
+                    <td style="padding:0.6rem;"><i class="fa-solid fa-location-dot" style="color:var(--primary); margin-right:0.3rem;"></i>${c.location_label}</td>
+                    <td style="padding:0.6rem; font-family:monospace;">${c.location_barcode}</td>
+                    <td style="padding:0.6rem; color:var(--text-muted); font-size:0.8rem;">${c.received_at}</td>
+                    <td style="padding:0.6rem; text-align:right;">
+                        <span style="display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:600; ${badgeColor}">
+                            ${isStock ? 'Trong kho' : 'Đã xuất'}
+                        </span>
+                    </td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+            content.innerHTML = html;
+        })
+        .catch(err => {
+            spinner.style.display = 'none';
+            content.innerHTML = `<div class="alert alert-error" style="padding:0.75rem 1rem; border-radius:10px; background:rgba(239,68,68,0.1); color:#f87171; border:1px solid rgba(239,68,68,0.2);">Lỗi khi tra cứu: ${err.message}</div>`;
+        });
+}
+</script>
+@endpush

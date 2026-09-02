@@ -23,6 +23,7 @@ class Product extends Model
                  ->where('ic.current_pieces', '>', 0);
         })
         ->select(
+            'products.id',
             'products.id as product_id',
             'products.sku',
             'products.name',

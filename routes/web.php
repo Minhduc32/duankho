@@ -8,6 +8,7 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\UserController;
 
 // Auth Routes (Guest)
 Route::middleware('guest')->group(function () {
@@ -19,8 +20,12 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
-    // Logout
+    // Logout & Profile
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/profile/password', [AuthController::class, 'updatePassword'])->name('profile.password');
+
+    // Quick carton / barcode lookup API
+    Route::get('/api/carton/lookup', [DashboardController::class, 'cartonLookup'])->name('carton.lookup');
 
     // Notifications API
     Route::get('/api/notifications', [NotificationController::class, 'index'])->name('notifications');
@@ -83,5 +88,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/export-inventory', [ReportController::class, 'exportInventory'])->name('export.inventory');
         Route::get('/export-occupancy', [ReportController::class, 'exportOccupancy'])->name('export.occupancy');
         Route::get('/export-audit', [ReportController::class, 'exportAudit'])->name('export.audit');
+    });
+
+    // User Management (Admin only)
+    Route::middleware('role:admin')->prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::post('/{id}', [UserController::class, 'update'])->name('update');
+        Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
+        Route::post('/{id}/delete', [UserController::class, 'destroy'])->name('destroy');
     });
 });

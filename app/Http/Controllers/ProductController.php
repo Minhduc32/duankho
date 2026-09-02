@@ -12,10 +12,41 @@ use Exception;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $products = Product::getStockStatus();
-        return view('products.index', compact('products'));
+
+        // 1. Lọc theo từ khóa tìm kiếm (SKU, Tên, Barcode)
+        if ($q = trim($request->get('q', ''))) {
+            $qLower = mb_strtolower($q);
+            $products = $products->filter(function ($item) use ($qLower) {
+                return str_contains(mb_strtolower($item->name ?? ''), $qLower)
+                    || str_contains(mb_strtolower($item->sku ?? ''), $qLower)
+                    || str_contains(mb_strtolower($item->barcode ?? ''), $qLower);
+            });
+        }
+
+        // 2. Lọc theo danh mục
+        if ($cat = trim($request->get('category', ''))) {
+            $products = $products->where('category', $cat);
+        }
+
+        // 3. Lọc theo trạng thái tồn kho
+        if ($status = $request->get('status')) {
+            if ($status === 'out_of_stock') {
+                $products = $products->filter(fn($p) => (int)$p->total_pieces <= 0);
+            } elseif ($status === 'low_stock') {
+                $products = $products->filter(fn($p) => (int)$p->total_pieces > 0 && (int)$p->total_pieces < (int)$p->min_stock);
+            } elseif ($status === 'over_stock') {
+                $products = $products->filter(fn($p) => (int)$p->max_stock > 0 && (int)$p->total_pieces > (int)$p->max_stock);
+            } elseif ($status === 'normal') {
+                $products = $products->filter(fn($p) => (int)$p->total_pieces >= (int)$p->min_stock && ((int)$p->max_stock === 0 || (int)$p->total_pieces <= (int)$p->max_stock));
+            }
+        }
+
+        $categories = Product::whereNotNull('category')->where('category', '!=', '')->distinct()->pluck('category');
+
+        return view('products.index', compact('products', 'categories'));
     }
 
     public function store(Request $request)

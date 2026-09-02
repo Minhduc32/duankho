@@ -175,6 +175,38 @@
         </div>
     </div>
 
+    <!-- Search & Filter Bar -->
+    <form method="GET" action="{{ route('products.index') }}" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+        <div style="flex: 2; min-width: 220px;">
+            <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Tìm theo mã SKU, tên sản phẩm hoặc barcode...">
+        </div>
+        <div style="flex: 1; min-width: 160px;">
+            <select name="category" class="form-control" onchange="this.form.submit()">
+                <option value="">-- Tất cả danh mục --</option>
+                @foreach ($categories as $c)
+                    <option value="{{ $c }}" {{ request('category') == $c ? 'selected' : '' }}>{{ $c }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div style="flex: 1; min-width: 170px;">
+            <select name="status" class="form-control" onchange="this.form.submit()">
+                <option value="">-- Tất cả trạng thái --</option>
+                <option value="normal" {{ request('status') == 'normal' ? 'selected' : '' }}>Tồn kho bình thường</option>
+                <option value="low_stock" {{ request('status') == 'low_stock' ? 'selected' : '' }}>Dưới định mức (Cần nhập)</option>
+                <option value="out_of_stock" {{ request('status') == 'out_of_stock' ? 'selected' : '' }}>Hết hàng (0 cái)</option>
+                <option value="over_stock" {{ request('status') == 'over_stock' ? 'selected' : '' }}>Vượt định mức tối đa</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">
+            <i class="fa-solid fa-filter"></i> Lọc
+        </button>
+        @if (request()->hasAny(['q', 'category', 'status']))
+            <a href="{{ route('products.index') }}" class="btn btn-secondary" style="color: var(--text-muted);">
+                <i class="fa-solid fa-xmark"></i> Xóa lọc
+            </a>
+        @endif
+    </form>
+
     <!-- Products Table -->
     <div class="table-container">
         <table class="table">

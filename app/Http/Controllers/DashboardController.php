@@ -89,4 +89,52 @@ class DashboardController extends Controller
 
         return view('audit_logs', compact('logs'));
     }
+
+    /**
+     * Tra cứu nhanh thùng hàng theo mã thùng hoặc mã vạch vị trí/sản phẩm
+     */
+    public function cartonLookup(Request $request)
+    {
+        $code = trim($request->get('code', ''));
+
+        if (empty($code)) {
+            return response()->json(['error' => 'Vui lòng nhập mã thùng hoặc mã barcode để tra cứu.'], 400);
+        }
+
+        $cartons = \App\Models\InventoryCarton::with(['product', 'location'])
+            ->where(function ($qb) use ($code) {
+                $qb->where('carton_code', 'like', "%{$code}%")
+                   ->orWhereHas('product', function ($pq) use ($code) {
+                       $pq->where('sku', 'like', "%{$code}%")
+                          ->orWhere('barcode', 'like', "%{$code}%");
+                   })
+                   ->orWhereHas('location', function ($lq) use ($code) {
+                       $lq->where('barcode', 'like', "%{$code}%");
+                   });
+            })
+            ->orderBy('status', 'ASC')
+            ->limit(20)
+            ->get();
+
+        $results = $cartons->map(function ($c) {
+            return [
+                'id'              => $c->id,
+                'carton_code'     => $c->carton_code,
+                'product_name'    => $c->product->name ?? 'N/A',
+                'sku'             => $c->product->sku ?? 'N/A',
+                'current_pieces'  => $c->current_pieces,
+                'original_pieces' => $c->original_pieces,
+                'status'          => $c->status,
+                'location_label'  => $c->location ? "Dãy {$c->location->zone} - {$c->location->rack} - {$c->location->level}" : 'Chưa xếp',
+                'location_barcode'=> $c->location->barcode ?? '-',
+                'received_at'     => $c->received_at ? date('d/m/Y H:i', strtotime($c->received_at)) : '-',
+            ];
+        });
+
+        return response()->json([
+            'count'   => $results->count(),
+            'cartons' => $results,
+        ]);
+    }
 }
+

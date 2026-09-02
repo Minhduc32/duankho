@@ -72,6 +72,35 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->with('success', 'Đăng ký thành công! Chào mừng ' . $user->full_name . '!');
     }
 
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password'     => 'required|string|min:6|confirmed',
+        ], [
+            'current_password.required' => 'Vui lòng nhập mật khẩu hiện tại.',
+            'new_password.required'     => 'Vui lòng nhập mật khẩu mới.',
+            'new_password.min'          => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+            'new_password.confirmed'    => 'Xác nhận mật khẩu mới không khớp.',
+        ]);
+
+        $user = Auth::user();
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return back()->with('error', 'Mật khẩu hiện tại không chính xác!');
+        }
+
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($request->new_password),
+        ]);
+
+        \App\Models\AuditLog::logAction($user->id, 'UPDATE_PASSWORD', 'users', $user->id, null, [
+            'action' => 'Người dùng tự đổi mật khẩu cá nhân'
+        ]);
+
+        return back()->with('success', 'Đổi mật khẩu thành công!');
+    }
+
     public function logout(Request $request)
     {
         Auth::logout();
@@ -80,3 +109,4 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 }
+

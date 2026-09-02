@@ -536,6 +536,18 @@
                     <span>Nhật ký Audit Log</span>
                 </a>
             </li>
+
+            @auth
+                @if (Auth::user()->role && Auth::user()->role->name === 'admin')
+                    <li class="nav-item-title">Hệ thống</li>
+                    <li>
+                        <a href="{{ route('users.index') }}" class="nav-link {{ Route::is('users.*') ? 'active' : '' }}">
+                            <i class="fa-solid fa-users-gear"></i>
+                            <span>Quản lý nhân viên</span>
+                        </a>
+                    </li>
+                @endif
+            @endauth
         </ul>
 
         <!-- User profile footer -->
@@ -546,8 +558,11 @@
                 </div>
                 <div class="user-info">
                     <span class="user-name">{{ Auth::user()->full_name }}</span>
-                    <span class="user-role">{{ Auth::user()->role->name }}</span>
+                    <span class="user-role">{{ Auth::user()->role->name ?? 'User' }}</span>
                 </div>
+                <button type="button" class="btn-logout" title="Đổi mật khẩu cá nhân" onclick="openModal('myPasswordModal')" style="color: var(--warning); padding: 0.4rem;">
+                    <i class="fa-solid fa-key"></i>
+                </button>
                 <form action="{{ route('logout') }}" method="POST" style="margin: 0;">
                     @csrf
                     <button type="submit" class="btn-logout" title="Đăng xuất">
@@ -940,7 +955,54 @@ setInterval(() => {
 
 // 🚀 Khởi động real-time polling (mỗi 10 giây phát hiện phiếu mới)
 startRealtimePolling();
+
+function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.style.display = 'flex';
+        el.classList.add('active');
+    }
+}
+function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    }
+}
 </script>
+
+@auth
+<!-- Modal Đổi Mật Khẩu Cá Nhân -->
+<div class="modal" id="myPasswordModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(15,23,42,0.75); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:1rem;">
+    <div style="background:var(--bg-sidebar); border:1px solid var(--border-color); border-radius:20px; width:100%; max-width:440px; padding:2rem; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="font-size:1.2rem; font-weight:700; color:white;"><i class="fa-solid fa-key" style="color:var(--warning); margin-right:0.5rem;"></i>Đổi mật khẩu cá nhân</h3>
+            <button onclick="closeModal('myPasswordModal')" style="background:none; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">&times;</button>
+        </div>
+        <form action="{{ route('profile.password') }}" method="POST">
+            @csrf
+            <div style="margin-bottom:1rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase;">Mật khẩu hiện tại *</label>
+                <input type="password" name="current_password" required class="form-control" style="width:100%; padding:0.7rem 1rem; background:rgba(15,23,42,0.5); border:1px solid var(--border-color); border-radius:10px; color:white;" placeholder="••••••">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase;">Mật khẩu mới * (tối thiểu 6 ký tự)</label>
+                <input type="password" name="new_password" required minlength="6" class="form-control" style="width:100%; padding:0.7rem 1rem; background:rgba(15,23,42,0.5); border:1px solid var(--border-color); border-radius:10px; color:white;" placeholder="••••••">
+            </div>
+            <div style="margin-bottom:1.5rem;">
+                <label style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.4rem; text-transform:uppercase;">Nhập lại mật khẩu mới *</label>
+                <input type="password" name="new_password_confirmation" required minlength="6" class="form-control" style="width:100%; padding:0.7rem 1rem; background:rgba(15,23,42,0.5); border:1px solid var(--border-color); border-radius:10px; color:white;" placeholder="••••••">
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.75rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('myPasswordModal')">Hủy</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Lưu mật khẩu</button>
+            </div>
+        </form>
+    </div>
+</div>
+@endauth
+@stack('scripts')
 </body>
 </html>
 
